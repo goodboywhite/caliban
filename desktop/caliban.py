@@ -449,6 +449,16 @@ class TrackReview:
         if not os.path.exists(backup_file):
             shutil.copyfile(self.filename + ".trk", backup_file)
 
+        #clear any empty tracks before saving file
+        empty_tracks = []
+        for key in self.tracks:
+            if len(self.tracks[key]['frames']) == 0:
+                empty_tracks.append(self.tracks[key]['label'])
+                print(self.tracks[key])
+        
+        for track in empty_tracks:
+            del self.tracks[track]
+
         with tarfile.open(self.filename + ".trk", "w") as trks:
             with tempfile.NamedTemporaryFile("w") as lineage_file:
                 json.dump(self.tracks, lineage_file, indent=1)
