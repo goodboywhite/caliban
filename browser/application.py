@@ -132,7 +132,6 @@ def get_frame(frame, project_id):
 
     return jsonify(payload)
 
-
 @app.route("/load/<filename>", methods=["POST"])
 def load(filename):
     ''' Initate TrackReview/ZStackReview object and load object to database.
