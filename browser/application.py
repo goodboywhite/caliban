@@ -165,7 +165,8 @@ def load(filename):
             "max_frames": track_review.max_frames,
             "tracks": track_review.readable_tracks,
             "dimensions": track_review.dimensions,
-            "project_id": project_id
+            "project_id": project_id,
+            "screen_scale": track_review.scale_factor
         })
 
     if is_npz_file(filename):
@@ -242,7 +243,6 @@ def shortcut(filename):
             os.path.splitext(filename)[-1])
     }
     return jsonify(error), 400
-
 
 def create_connection(_):
     ''' Create a database connection to a SQLite database.
