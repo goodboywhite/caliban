@@ -567,10 +567,6 @@ class TrackReview:
 
         self.scale_factor = 2
 
-        self.highlight = False
-        self.highlight_cell_one = -1
-        self.highlight_cell_two = -1
-
         self.color_map = plt.get_cmap('cubehelix')
         self.color_map.set_bad('red')
 
@@ -623,12 +619,6 @@ class TrackReview:
 
             frame = self.trial["tracked"][frame][:,:,0]
 
-            if (self.highlight):
-                if (self.highlight_cell_one != -1):
-                    frame = np.ma.masked_equal(frame, self.highlight_cell_one)
-                if (self.highlight_cell_two != -1):
-                    frame = np.ma.masked_equal(frame, self.highlight_cell_two)
-
             return pngify(imgarr=frame,
                          vmin=0,
                          vmax=self.num_tracks,
@@ -669,10 +659,6 @@ class TrackReview:
             self.action_handle_draw(**info)
         elif action_type == "fill_hole":
             self.action_fill_hole(**info)
-        elif action_type == "change_highlight":
-            self.highlight = not self.highlight
-        elif action_type == "change_selected_cells":
-            self.action_change_selected_cells(**info)
 
         else:
             raise ValueError("Invalid action '{}'".format(action_type))
@@ -724,10 +710,6 @@ class TrackReview:
             self.add_cell_info(add_label = edit_value, frame = frame)
 
         self.trial['tracked'][frame] = annotated
-
-    def action_change_selected_cells(self, cell_one, cell_two):
-        self.highlight_cell_one = cell_one
-        self.highlight_cell_two = cell_two
 
     def action_watershed(self, label_1, label_2, frame, x1_location, y1_location, x2_location, y2_location):
 
