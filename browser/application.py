@@ -116,9 +116,8 @@ def get_frame(frame, project_id):
     state = pickle.loads(id_exists[2])
 
     # Obtain raw, mask, and edit mode frames
-    img = state.get_frame(frame, raw=False, edit_background=False)
-    raw = state.get_frame(frame, raw=True, edit_background=False)
-    edit = state.get_frame(frame, raw=False, edit_background=True)
+    img = state.get_frame(frame, raw=False)
+    raw = state.get_frame(frame, raw=True)
 
     # Obtain color map of the cells
     edit_arr = state.get_array(frame)
@@ -128,7 +127,6 @@ def get_frame(frame, project_id):
     payload = {
         'raw': f'data:image/png;base64,{encode(raw)}',
         'segmented': f'data:image/png;base64,{encode(img)}',
-        'edit_background': f'data:image/png;base64,{encode(edit)}',
         'seg_arr': edit_arr.tolist()
     }
 
