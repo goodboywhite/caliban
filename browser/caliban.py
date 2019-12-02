@@ -558,8 +558,8 @@ class TrackReview:
 
         self.scale_factor = 2
 
-        self.color_map = plt.get_cmap('cubehelix')
-        self.color_map.set_bad('red')
+        self.color_map = plt.get_cmap('viridis')
+        self.color_map.set_bad('black')
 
         self.current_frame = 0
 
@@ -601,6 +601,7 @@ class TrackReview:
                           cmap="cubehelix")
         else:
             frame = self.tracked[frame][:,:,0]
+            frame = np.ma.masked_equal(frame, 0)
             return pngify(imgarr=frame,
                          vmin=0,
                          vmax=max(self.tracks),
