@@ -49,13 +49,15 @@ def upload_file(project_id):
     return redirect("/")
 
 
-@app.route("/action/<project_id>/<action_type>", methods=["POST"])
-def action(project_id, action_type):
+@app.route("/action/<project_id>/<action_type>/<frame>", methods=["POST"])
+def action(project_id, action_type, frame):
     ''' Make an edit operation to the data file and update the object
         in the database.
     '''
+
     # obtain 'info' parameter data sent by .js script
     info = {k: json.loads(v) for k, v in request.values.to_dict().items()}
+    frame = int(frame)
 
     try:
         conn = create_connection("caliban.db")
@@ -69,6 +71,10 @@ def action(project_id, action_type):
         state = pickle.loads(id_exists[2])
         # Perform edit operation on the data file
         state.action(action_type, info)
+        frames_changed = state.frames_changed
+        info_changed = state.info_changed
+
+        state.frames_changed = state.info_changed = False
 
         # Update object in local database
         update_object(conn, (id_exists[1], state, project_id))
@@ -78,26 +84,27 @@ def action(project_id, action_type):
         traceback.print_exc()
         return jsonify({"error": str(e)}), 500
 
-    # Send status of operation to .js file
-    return jsonify({"tracks_changed": True, "frames_changed": True})
+    if info_changed:
+        tracks = state.readable_tracks
+    else:
+        tracks = False
 
+    if frames_changed:
+        img = state.get_frame(frame, raw=False)
+        raw = state.get_frame(frame, raw=True)
+        edit_arr = state.get_array(frame)
 
-@app.route("/tracks/<project_id>")
-def get_tracks(project_id):
-    ''' Send track metadata in string form to .js file to present cell info in
-        the browser.
-    '''
-    conn = create_connection("caliban.db")
-    # Use id to grab appropriate TrackReview/ZStackReview object from database
-    id_exists = get_project(conn, project_id)
-    conn.close()
+        encode = lambda x: base64.encodebytes(x.read()).decode()
 
-    if id_exists is None:
-        return jsonify({'error': 'project_id not found'}), 404
+        img_payload = {
+            'raw': f'data:image/png;base64,{encode(raw)}',
+            'segmented': f'data:image/png;base64,{encode(img)}',
+            'seg_arr': edit_arr.tolist()
+            }
+    else:
+        img_payload = False
 
-    state = pickle.loads(id_exists[2])
-    return jsonify({"tracks": state.readable_tracks})
-
+    return jsonify({"tracks": tracks, "imgs": img_payload})
 
 @app.route("/frame/<frame>/<project_id>")
 def get_frame(frame, project_id):
@@ -128,7 +135,7 @@ def get_frame(frame, project_id):
         'raw': f'data:image/png;base64,{encode(raw)}',
         'segmented': f'data:image/png;base64,{encode(img)}',
         'seg_arr': edit_arr.tolist()
-    }
+        }
 
     return jsonify(payload)
 
