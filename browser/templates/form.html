@@ -39,7 +39,7 @@
             </form> -->
             <div class='form-help'>
                 <h3>
-                    Click on a file that you would like use to see how Caliban works!
+                    Select a file that you would like use to see how Caliban works!
                 </h5>
                 <p>The .trk files allow you to annotate RAW264 cells across time-lapse frames while preserving relationship information.</p>
                 <p>
@@ -51,6 +51,13 @@
 
                      test3.npz is an example of zslices from a chicken embryo.
                 </p>
+                <p>
+                     The .npz files are recommended for trying out Caliban's annotation correction features, while the .trk files are recommended as an example of how the tool can be adapted to particular use cases.
+                </p>
+
+                <p> Caliban currently supports whole-label editing options and some basic pixel-editing tools. Advanced pixel-editing tools will be coming soon. </p>
+
+                <p>These files will not be overwritten with any changes, so feel free to try any and all of Caliban's functionality. Refreshing the page with a file open will reload the unmodified file.</p>
             </div>
             <form id="caliban-form" method="POST" action="{{ url_for('tool') }}">
               <select name="filename">
