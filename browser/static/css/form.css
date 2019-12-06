@@ -51,4 +51,6 @@
 
 .form-help {
     text-align: center;
+    box-sizing: border-box;
+    width: 50%;
 }
