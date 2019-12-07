@@ -1702,34 +1702,42 @@ class ZStackReview:
         cell_info_label.draw()
         frame_label.draw()
 
+    def helper_draw_raw(self, frame):
+        cmap = plt.get_cmap(self.cmap_options[self.current_cmap])
+        image = self.helper_array_to_img(input_array = frame[:,:,self.channel],
+            vmax = self.max_intensity[self.channel],
+            cmap = cmap,
+            output = 'pyglet')
+        return image
+
+    def helper_draw_ann(self, frame):
+        cmap = plt.get_cmap("cubehelix")
+        cmap.set_bad('red')
+
+        if self.highlight:
+            frame = np.ma.masked_equal(frame, self.highlighted_cell_one)
+            frame = np.ma.masked_equal(frame, self.highlighted_cell_two)
+
+        vmin = max(0, self.adjustment[self.feature])
+        vmax = max(1, 20 + self.adjustment[self.feature])
+
+        image = self.helper_array_to_img(input_array = frame[:,:,self.feature],
+                                        vmin = vmin,
+                                        vmax = vmax,
+                                        cmap = cmap,
+                                        output = 'pyglet')
+        return image
+
     def draw_current_frame(self):
         frame = self.get_current_frame()
 
         if not self.edit_mode:
 
-            cmap = plt.get_cmap("cubehelix")
-            cmap.set_bad('red')
-
-            if self.highlight:
-                if self.mode.kind == "SELECTED":
-                    frame = np.ma.masked_equal(frame, self.highlighted_cell_one)
-                elif self.mode.kind == "QUESTION":
-                    if self.mode.action == "FLOOD CELL" or self.mode.action == "TRIM PIXELS":
-                        frame = np.ma.masked_equal(frame, self.highlighted_cell_one)
-                elif self.mode.kind == "MULTIPLE":
-                    frame = np.ma.masked_equal(frame, self.highlighted_cell_one)
-                    frame = np.ma.masked_equal(frame, self.highlighted_cell_two)
-
             if self.draw_raw:
-                image = self.helper_array_to_img(input_array = frame[:,:,self.channel],
-                                                         vmax = self.max_intensity[self.channel],
-                                                         cmap = self.cmap_options[self.current_cmap],
-                                                         output = 'pyglet')
+                image = self.helper_draw_raw(frame)
+
             else:
-                image = self.helper_array_to_img(input_array = frame[:,:,self.feature],
-                                                        vmax = max(1,np.max(self.cell_ids[self.feature]) + self.adjustment[self.feature]),
-                                                        cmap = cmap,
-                                                        output = 'pyglet')
+                image = self.helper_draw_ann(frame)
 
             sprite = pyglet.sprite.Sprite(image, x=self.sidebar_width, y=0)
 
@@ -1743,10 +1751,15 @@ class ZStackReview:
 
         elif self.edit_mode:
 
+            red_brush_cmap = plt.get_cmap('cubehelix')
+            red_brush_cmap.set_bad('red')
+            red_brush_view = np.ma.masked_equal(self.brush_view, self.edit_value)
+
             # create pyglet image object so we can display brush location
-            brush_img = self.helper_array_to_img(input_array = self.brush_view,
-                                                        vmax = self.num_cells[self.feature] + self.adjustment[self.feature],
-                                                        cmap = 'gist_stern',
+            brush_img = self.helper_array_to_img(input_array = red_brush_view,
+                                                        vmin = max(0, self.adjustment[self.feature]),
+                                                        vmax = max(1, 20 + self.adjustment[self.feature]),
+                                                        cmap = red_brush_cmap,
                                                         output = 'pyglet')
 
             # get raw and annotated data
@@ -2161,7 +2174,7 @@ class ZStackReview:
 
         self.create_cell_info(feature = self.feature)
 
-    def helper_array_to_img(self, input_array, vmax, cmap, output):
+    def helper_array_to_img(self, input_array, vmax, cmap, output, vmin = None):
         '''
         takes input array and does file processing (save with pyplot as temp file)
         creates and returns a pyglet image with that file loaded
@@ -2169,6 +2182,7 @@ class ZStackReview:
 
         img_file = BytesIO()
         plt.imsave(img_file, input_array,
+                        vmin = vmin,
                         vmax=vmax,
                         cmap=cmap,
                         format='png')
@@ -2187,7 +2201,7 @@ class ZStackReview:
         else:
             return None
 
-    def helper_make_composite_img(self, base_array, overlay_array, alpha = 0.6):
+    def helper_make_composite_img(self, base_array, overlay_array, alpha = 0.8):
         '''
         takes two arrays and overlays one on top of the other
         (uses conversion to hsv to make nice gray raw + color annotation
@@ -2254,9 +2268,12 @@ class ZStackReview:
         if self.invert:
             raw_RGB = invert(raw_RGB)
 
+        cmap = plt.get_cmap("cubehelix")
+
         ann_img = self.helper_array_to_img(input_array = current_ann,
-                                            vmax = self.num_cells[self.feature] + self.adjustment[self.feature],
-                                            cmap = 'gist_stern',
+                                            vmin = max(0, self.adjustment[self.feature]),
+                                            vmax = max(1, 20 + self.adjustment[self.feature]),
+                                            cmap = cmap,
                                             output = 'array')
 
         ann_RGB = ann_img[:,:,0:3]
